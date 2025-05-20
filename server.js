@@ -19,17 +19,12 @@ function buildPaths() {
   const paths = [];
 
   for (const word of wordlist) {
-    // If word looks like a directory (ends with slash) or special file with slash, add as is
     if (word.endsWith('/')) {
       paths.push(word);
     } else if (word.includes('/')) {
-      // e.g. '.git/config' or nested path - add as is
       paths.push(word);
     } else {
-      // Add the word as a path without extension (could be a directory)
       paths.push(word);
-
-      // Add word with each extension
       for (const ext of fileExtensions) {
         paths.push(`${word}.${ext}`);
       }
@@ -40,6 +35,8 @@ function buildPaths() {
 }
 
 const pathsToCheck = buildPaths();
+
+const USER_AGENT = 'Mozilla/5.0 (compatible; PathScannerBot/1.0)';
 
 app.post('/scan', async (req, res) => {
   const { url } = req.body;
@@ -52,7 +49,10 @@ app.post('/scan', async (req, res) => {
   for (const path of pathsToCheck) {
     const fullUrl = `${url.replace(/\/$/, '')}/${path}`;
     try {
-      const response = await fetch(fullUrl, { method: 'HEAD' });
+      const response = await fetch(fullUrl, {
+        method: 'HEAD',
+        headers: { 'User-Agent': USER_AGENT }
+      });
       results.push({ path: fullUrl, status: response.status });
     } catch (e) {
       results.push({ path: fullUrl, status: 'ERROR' });
